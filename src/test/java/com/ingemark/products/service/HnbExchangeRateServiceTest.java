@@ -1,6 +1,7 @@
 package com.ingemark.products.service;
 
 import com.ingemark.products.exception.ExchangeRateException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -8,7 +9,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Currency;
 
@@ -33,6 +36,12 @@ class HnbExchangeRateServiceTest {
         service = new HnbExchangeRateService(builder.build());
     }
 
+    // Without this, an expected request that is never issued silently passes.
+    @AfterEach
+    void verifyAllExpectedRequestsWereMade() {
+        server.verify();
+    }
+
     @Test
     void convertFromEur_returnsConvertedAmountWithCurrencyDefaultScale() {
         expectRatesRequest("USD")
@@ -44,7 +53,6 @@ class HnbExchangeRateServiceTest {
 
         assertThat(result).isEqualByComparingTo("108.50");
         assertThat(result.scale()).isEqualTo(USD.getDefaultFractionDigits()); // 2
-        server.verify();
     }
 
     @Test
@@ -89,11 +97,12 @@ class HnbExchangeRateServiceTest {
     }
 
     @Test
-    void convertFromEur_throwsWhenHnbIsUnreachable() {
-        expectRatesRequest("USD").andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+    void convertFromEur_throwsAndPreservesCauseWhenApiUnreachable() {
+        expectRatesRequest("USD").andRespond(withException(new IOException("connection refused")));
 
         assertThatThrownBy(() -> service.convertFromEur(new BigDecimal("100.00"), USD))
-                .isInstanceOf(ExchangeRateException.class);
+                .isInstanceOf(ExchangeRateException.class)
+                .hasCauseInstanceOf(RestClientException.class);
     }
 
     @Test
@@ -134,6 +143,33 @@ class HnbExchangeRateServiceTest {
 
         assertThatThrownBy(() -> service.convertFromEur(new BigDecimal("100.00"), USD))
                 .isInstanceOf(ExchangeRateException.class);
+    }
+
+    @Test
+    void convertFromEur_usesFirstRateWhenHnbReturnsMultipleEntries() {
+        // HNB's contract returns one element per requested currency, but the implementation
+        // tolerates a multi-element response by taking the first. Locks in that contract.
+        expectRatesRequest("USD")
+                .andRespond(withSuccess(
+                        "[{\"valuta\":\"USD\",\"srednji_tecaj\":\"1,100000\"},"
+                        + "{\"valuta\":\"USD\",\"srednji_tecaj\":\"9,999999\"}]",
+                        MediaType.APPLICATION_JSON));
+
+        BigDecimal result = service.convertFromEur(new BigDecimal("100.00"), USD);
+
+        assertThat(result).isEqualByComparingTo("110.00");
+    }
+
+    @Test
+    void convertFromEur_roundsHalfUp() {
+        expectRatesRequest("USD")
+                .andRespond(withSuccess(
+                        "[{\"valuta\":\"USD\",\"srednji_tecaj\":\"1,005\"}]",
+                        MediaType.APPLICATION_JSON));
+
+        BigDecimal result = service.convertFromEur(new BigDecimal("1"), USD);
+
+        assertThat(result).isEqualByComparingTo("1.01");
     }
 
     @Test
