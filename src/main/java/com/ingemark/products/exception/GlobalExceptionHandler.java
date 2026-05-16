@@ -27,18 +27,20 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
     }
 
-    @ExceptionHandler(ExchangeRateException.class)
-    public ResponseEntity<ApiError> handleExchangeRate(ExchangeRateException ex, HttpServletRequest request) {
-        log.warn("Exchange rate lookup failed: {}", ex.getMessage());
-        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request, null);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<ApiError.FieldViolation> violations = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> new ApiError.FieldViolation(fe.getField(), fe.getDefaultMessage()))
                 .toList();
         return build(HttpStatus.BAD_REQUEST, "Validation failed", request, violations);
+    }
+
+    @ExceptionHandler(ExchangeRateException.class)
+    public ResponseEntity<ApiError> handleExchangeRate(ExchangeRateException ex, HttpServletRequest request) {
+        log.warn("Exchange rate lookup failed", ex);
+        return build(HttpStatus.SERVICE_UNAVAILABLE,
+                "Product creation failed due to third-party unavailability. Please try again.",
+                request, null);
     }
 
     @ExceptionHandler(Exception.class)

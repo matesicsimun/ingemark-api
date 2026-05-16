@@ -44,8 +44,8 @@ public class ProductService {
 
         try {
             return mapper.toResponse(repository.saveAndFlush(product));
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("Failed to save product", e);
+        } catch (DataIntegrityViolationException dataIntegrityException) {
+            throw new IllegalStateException("Failed to save product", dataIntegrityException);
         }
     }
 

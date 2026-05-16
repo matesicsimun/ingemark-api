@@ -1,8 +1,6 @@
 package com.ingemark.products.service;
 
 import com.ingemark.products.exception.ExchangeRateException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -56,12 +54,11 @@ public class HnbExchangeRateService implements ExchangeRateService {
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
                         throw new ExchangeRateException(
-                                "HNB API returned status " + res.getStatusCode());
+                                "HNB API returned status " + res.getStatusCode() + " for " + code);
                     })
                     .body(new ParameterizedTypeReference<>() {});
         } catch (RestClientException e) {
-            log.warn("HNB request failed for {}", code, e);
-            throw new ExchangeRateException("Failed to fetch exchange rate from HNB", e);
+            throw new ExchangeRateException("HNB request failed for " + code, e);
         }
     }
 
@@ -70,8 +67,8 @@ public class HnbExchangeRateService implements ExchangeRateService {
         try {
             return new BigDecimal(raw.replace(',', '.'));
         } catch (NumberFormatException e) {
-            log.warn("Could not parse middle rate '{}' for {}", raw, code, e);
-            throw new ExchangeRateException("Invalid middle rate from HNB for " + code, e);
+            throw new ExchangeRateException(
+                    "Invalid middle rate '" + raw + "' from HNB for " + code, e);
         }
     }
 }
