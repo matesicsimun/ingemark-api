@@ -17,8 +17,7 @@ import java.util.List;
 @Service
 public class HnbExchangeRateService implements ExchangeRateService {
 
-    private static final Logger log = LoggerFactory.getLogger(HnbExchangeRateService.class);
-    private static final String PATH = "/tecajni-eur/v3";
+    private static final String PATH = "/tecajn-eur/v3";
     public static final String VALUTA_PARAM = "valuta";
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
