@@ -13,6 +13,5 @@ spring:
 hnb:
   api:
     base-url: http://localhost:0
-    currency: USD
     connect-timeout: 1s
     read-timeout: 1s

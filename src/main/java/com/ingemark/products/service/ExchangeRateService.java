@@ -1,11 +1,14 @@
 package com.ingemark.products.service;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 
 public interface ExchangeRateService {
 
     /**
-     * Returns the middle rate for converting 1 EUR into the given currency.
+     * Converts the given EUR amount into the target currency. The implementation
+     * owns the rate source and applies the target currency's default fraction
+     * digits as the rounding scale.
      */
-    BigDecimal getEurRate(String currency);
+    BigDecimal convertFromEur(BigDecimal eurAmount, Currency targetCurrency);
 }

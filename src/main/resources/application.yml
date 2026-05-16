@@ -27,7 +27,6 @@ server:
 hnb:
   api:
     base-url: https://api.hnb.hr
-    currency: USD
     connect-timeout: 5s
     read-timeout: 10s
 
