@@ -2,14 +2,6 @@
 
 A small Spring Boot REST service that manages a list of products. Prices are stored in EUR and the USD equivalent is fetched at creation time from the [Croatian National Bank (HNB) public exchange-rate API](https://api.hnb.hr/).
 
-## Tech stack
-
-- Java 17
-- Spring Boot 3.4 (Spring MVC, Spring Data JPA, Bean Validation)
-- PostgreSQL 16 + Flyway migrations
-- Maven
-- JUnit 5 + Mockito + H2 (tests only)
-
 ## Quick start
 
 **Prerequisites:** JDK 17+, Maven 3.9+, Docker (for the database). Internet access is required at runtime since product creation calls the HNB API.
