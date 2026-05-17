@@ -1,14 +1,8 @@
 package com.ingemark.products.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 
 @Entity
 @Table(name = "products")
@@ -66,37 +60,5 @@ public class Product {
 
     public boolean isAvailable() {
         return available;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPriceEur(BigDecimal priceEur) {
-        this.priceEur = priceEur;
-    }
-
-    public void setPriceUsd(BigDecimal priceUsd) {
-        this.priceUsd = priceUsd;
-    }
-
-    public void setAvailable(boolean available) {
-        this.available = available;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Product product)) return false;
-        return id != null && Objects.equals(id, product.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
     }
 }
