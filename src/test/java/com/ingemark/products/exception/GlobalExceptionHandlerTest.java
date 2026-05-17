@@ -6,11 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import java.util.List;
 
@@ -52,7 +55,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleValidation_returns400WithOneViolationPerFieldError() {
+    void handleMethodArgumentNotValid_returns400WithOneViolationPerFieldError() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
         when(ex.getBindingResult()).thenReturn(bindingResult);
@@ -60,11 +63,20 @@ class GlobalExceptionHandlerTest {
                 new FieldError("req", "code", "code must be exactly 10 characters"),
                 new FieldError("req", "price_eur", "price_eur must be >= 0")
         ));
+        MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setRequestURI(PATH);
 
-        ResponseEntity<ApiError> response = handler.handleValidation(ex, request);
+        ResponseEntity<Object> response = handler.handleMethodArgumentNotValid(
+                ex, new HttpHeaders(), HttpStatus.BAD_REQUEST, new ServletWebRequest(servletRequest));
 
-        assertBody(response, HttpStatus.BAD_REQUEST, "Validation failed");
-        assertThat(response.getBody().violations())
+        ApiError body = (ApiError) response.getBody();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(body).isNotNull();
+        assertThat(body.status()).isEqualTo(400);
+        assertThat(body.error()).isEqualTo("Bad Request");
+        assertThat(body.message()).isEqualTo("Validation failed");
+        assertThat(body.path()).isEqualTo(PATH);
+        assertThat(body.violations())
                 .extracting(ApiError.FieldViolation::field, ApiError.FieldViolation::message)
                 .containsExactly(
                         tuple("code", "code must be exactly 10 characters"),
